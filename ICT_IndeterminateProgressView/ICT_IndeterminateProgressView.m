@@ -12,17 +12,6 @@ enum {
   kSlugWidth = 20
 };
 
-static void ParallelogramFill(CGRect r) {
-  UIBezierPath *path = [UIBezierPath bezierPath];
-  CGFloat dx = r.size.width/2;
-  [path moveToPoint:CGPointMake(r.origin.x - dx, r.origin.y)];
-  [path addLineToPoint:CGPointMake(r.origin.x + r.size.width - dx, r.origin.y)];
-  [path addLineToPoint:CGPointMake(r.origin.x + r.size.width + dx, r.origin.y + r.size.height)];
-  [path addLineToPoint:CGPointMake(r.origin.x + dx, r.origin.y + r.size.height)];
-  [path closePath];
-  [path fill];
-}
-
 @implementation ICT_IndeterminateProgressView
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -60,13 +49,7 @@ static void ParallelogramFill(CGRect r) {
     UIRectFill(frame);
   }
   [[self progressTintColor] set];
-  CGRect remainder;
-  if (6 < frame.size.height) {
-    UIRectFrame(frame);
-    remainder = CGRectInset(frame, 2, 2);
-  } else {
-    remainder = frame;
-  }
+  CGRect remainder = frame;
   if (0 == _offset) {
     _cycle = ! _cycle;
   }
@@ -76,16 +59,19 @@ static void ParallelogramFill(CGRect r) {
     CGContextSaveGState(c);
     CGContextClipToRect(c, remainder);
     CGRect slug;
+    UIBezierPath* path ;
     remainder = UIEdgeInsetsInsetRect(remainder, UIEdgeInsetsMake(0, -kSlugWidth/2, 0, -kSlugWidth/2));
     CGRectDivide(remainder, &slug, &remainder, MIN((CGFloat)_offset, remainder.size.width), CGRectMinXEdge);
     if (doDraw) {
-      ParallelogramFill(slug);
+      path = [UIBezierPath bezierPathWithRect:slug];
+      [path fill];
     }
     doDraw = ! doDraw;
     while (!CGRectIsEmpty(remainder)) {
       CGRectDivide(remainder, &slug, &remainder, kSlugWidth, CGRectMinXEdge);
       if (doDraw) {
-        ParallelogramFill(slug);
+        path = [UIBezierPath bezierPathWithRect:slug];
+        [path fill];
       }
       doDraw = ! doDraw;
     }
@@ -140,7 +126,7 @@ static void ParallelogramFill(CGRect r) {
   if (_animating != animating) {
     _animating = animating;
     if (_animating) {
-      [self setTimer:[NSTimer scheduledTimerWithTimeInterval:1/20.0
+      [self setTimer:[NSTimer scheduledTimerWithTimeInterval:1/100.0
                                                       target:self
                                                     selector:@selector(doTimer:)
                                                     userInfo:nil
